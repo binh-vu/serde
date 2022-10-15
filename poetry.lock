@@ -35,14 +35,6 @@ jupyter = ["ipython (>=7.8.0)", "tokenize-rt (>=3.2.0)"]
 uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
-name = "chardet"
-version = "5.0.0"
-description = "Universal encoding detector for Python 3"
-category = "main"
-optional = false
-python-versions = ">=3.6"
-
-[[package]]
 name = "click"
 version = "8.1.3"
 description = "Composable command line interface toolkit"
@@ -217,12 +209,11 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "93325f002f9555b4722a7b78f47250b6b70408f63d461eb1f2f5377de311496d"
+content-hash = "f489e9d4ff1e89a4031c5161718b60f9b78a503e5e584de9ee72f5a79363c50e"
 
 [metadata.files]
 attrs = []
 black = []
-chardet = []
 click = []
 colorama = []
 iniconfig = []
