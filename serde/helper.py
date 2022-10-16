@@ -1,4 +1,5 @@
-from typing import Generator, Iterable, Protocol, Union, TypeVar
+from io import BufferedWriter, TextIOWrapper
+from typing import Any, Callable, Generator, Iterable, Protocol, Union, TypeVar
 from typing_extensions import Self
 from pathlib import Path
 import bz2
@@ -15,7 +16,7 @@ T = TypeVar("T")
 DEFAULT_ORJSON_OPTS = orjson.OPT_NON_STR_KEYS
 
 
-def get_open_fn(infile: PathLike):
+def get_open_fn(infile: PathLike) -> Any:
     """Get the correct open function for the input file based on its extension. Supported bzip2, gz
 
     Parameters
@@ -56,7 +57,7 @@ def iter_n(it: Iterable[T], n: int) -> Generator[T, None, None]:
 
 
 def orjson_dumps(obj, **kwargs):
-    if kwargs.get('default', None) is None:
+    if "default" not in kwargs:
         return orjson.dumps(obj, default=_orjson_default, **kwargs)
     return orjson.dumps(obj, **kwargs)
 
