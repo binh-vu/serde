@@ -1,10 +1,12 @@
 [tool.poetry]
 name = "serde2"
-version = "1.1.0"
+version = "1.1.1"
 description = "Utilities for deserializing/serializing Python objects"
 authors = ["Binh Vu <binh@toan2.com>"]
 license = "MIT"
 readme = "README.md"
+homepage = "https://github.com/binh-vu/ream"
+repository = "https://github.com/binh-vu/ream"
 packages = [
     { include = "serde" }
 ]
