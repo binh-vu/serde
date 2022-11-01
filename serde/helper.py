@@ -1,5 +1,15 @@
 from io import BufferedWriter, TextIOWrapper
-from typing import Any, Callable, Generator, Iterable, Protocol, Union, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    Iterable,
+    Literal,
+    Optional,
+    Protocol,
+    Union,
+    TypeVar,
+)
 from typing_extensions import Self
 from pathlib import Path
 import bz2
@@ -46,6 +56,17 @@ def get_open_fn(infile: PathLike) -> Any:
         return lz4_frame.open
     else:
         return open
+
+
+def get_compression(file: Union[str, Path]) -> Optional[Literal["bz2", "gz", "lz4"]]:
+    file = str(file)
+    if file.endswith(".bz2"):
+        return "bz2"
+    if file.endswith(".gz"):
+        return "gz"
+    if file.endswith(".lz4"):
+        return "lz4"
+    return None
 
 
 def iter_n(it: Iterable[T], n: int) -> Generator[T, None, None]:
