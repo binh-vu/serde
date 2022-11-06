@@ -15,6 +15,7 @@ from pathlib import Path
 import bz2
 import gzip
 import orjson
+import chardet
 
 try:
     import lz4.frame as lz4_frame  # type: ignore
@@ -67,6 +68,36 @@ def get_compression(file: Union[str, Path]) -> Optional[Literal["bz2", "gz", "lz
     if file.endswith(".lz4"):
         return "lz4"
     return None
+
+
+def fix_encoding(fpath: Union[str, Path], backup_file: bool = True) -> Union[str, bool]:
+    """Try to decode the context of the file as text in UTF-8, if it fails, try windows encoding before try to detect
+    encoding of the file.
+
+    If the encoding is not UTF-8,this function replace the content of the file with UTF-8 content and keep the backup
+    if required.
+
+    The function return True if the content is in UTF-8
+    """
+    with get_open_fn(str(fpath))(str(fpath), "rb") as f:
+        content = f.read()
+
+    try:
+        content = content.decode("utf-8")
+        return True
+    except UnicodeDecodeError:
+        pass
+
+    try:
+        content = content.decode("windows-1252")
+    except UnicodeDecodeError:
+        encoding = chardet.detect(content)["encoding"]
+        content = content.decode(encoding)
+
+    with get_open_fn(str(fpath))(str(fpath), "wb") as f:
+        f.write(content.encode())
+
+    return content
 
 
 def iter_n(it: Iterable[T], n: int) -> Generator[T, None, None]:

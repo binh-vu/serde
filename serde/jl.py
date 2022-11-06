@@ -1,5 +1,14 @@
+from __future__ import annotations
+
 import orjson
-from typing import Any, Optional, Sequence, Union, Type, List, Callable
+from typing import (
+    Any,
+    TypeVar,
+    Type,
+    Callable,
+    overload,
+)
+from collections.abc import Sequence
 from serde.helper import (
     DEFAULT_ORJSON_OPTS,
     JsonSerde,
@@ -10,9 +19,21 @@ from serde.helper import (
     orjson_dumps,
 )
 
+T = TypeVar("T", bound=JsonSerde)
+
+
+@overload
+def deser(file: PathLike, nlines: int | None = None, cls: Type[T] = None) -> list[T]:
+    ...
+
+
+@overload
+def deser(file: PathLike, nlines: int | None = None) -> list:
+    ...
+
 
 def deser(
-    file: PathLike, nlines: Optional[int] = None, cls: Optional[Type[JsonSerde]] = None
+    file: PathLike, nlines: int | None = None, cls: Type[JsonSerde] | None = None
 ):
     with get_open_fn(file)(str(file), "rb") as f:
         if nlines is None:
@@ -26,10 +47,10 @@ def deser(
 
 
 def ser(
-    objs: Union[Sequence[dict], Sequence[tuple], Sequence[list], Sequence[JsonSerde]],
+    objs: Sequence[dict] | Sequence[tuple] | Sequence[list] | Sequence[JsonSerde],
     file: PathLike,
-    orjson_opts: Optional[int] = DEFAULT_ORJSON_OPTS,
-    orjson_default: Optional[Callable[[Any], Any]] = None,
+    orjson_opts: int | None = DEFAULT_ORJSON_OPTS,
+    orjson_default: Callable[[Any], Any] | None = None,
 ):
     with get_open_fn(file)(str(file), "wb") as f:
         if len(objs) > 0 and hasattr(objs[0], "to_dict"):
