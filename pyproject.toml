@@ -13,7 +13,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-orjson = "^3.8.0"
+orjson = "^3.8.2"
 ujson = "^5.5.0"
 "ruamel.yaml" = "^0.17.21"
 typing-extensions = "^4.4.0"
