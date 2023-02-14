@@ -26,9 +26,11 @@ PathLike = Union[str, Path]
 T = TypeVar("T")
 DEFAULT_ORJSON_OPTS = orjson.OPT_NON_STR_KEYS
 
+AVAILABLE_COMPRESSIONS = Literal["bz2", "gz", "lz4"]
+
 
 def get_open_fn(infile: PathLike) -> Any:
-    """Get the correct open function for the input file based on its extension. Supported bzip2, gz
+    """Get the correct open function for the input file based on its extension. Supported bzip2, gz, and lz4.
 
     Parameters
     ----------
@@ -59,7 +61,7 @@ def get_open_fn(infile: PathLike) -> Any:
         return open
 
 
-def get_compression(file: Union[str, Path]) -> Optional[Literal["bz2", "gz", "lz4"]]:
+def get_compression(file: Union[str, Path]) -> Optional[AVAILABLE_COMPRESSIONS]:
     file = str(file)
     if file.endswith(".bz2"):
         return "bz2"
@@ -68,6 +70,14 @@ def get_compression(file: Union[str, Path]) -> Optional[Literal["bz2", "gz", "lz
     if file.endswith(".lz4"):
         return "lz4"
     return None
+
+
+def get_filepath(
+    file: Union[str, Path], compression: Optional[AVAILABLE_COMPRESSIONS]
+) -> Path:
+    if compression is None:
+        return Path(file)
+    return Path(str(file) + f".{compression}")
 
 
 def fix_encoding(fpath: Union[str, Path], backup_file: bool = True) -> Union[str, bool]:
