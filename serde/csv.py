@@ -1,5 +1,6 @@
 import csv
 from typing import List
+
 from serde.helper import PathLike, get_open_fn
 
 
@@ -9,7 +10,8 @@ def deser(file: PathLike, delimiter: str = ","):
         return [row for row in reader]
 
 
-def ser(rows: List[List[str]], file: PathLike, mode: str = "w", delimiter: str = ","):
+def ser(rows: List[List[str]], file: PathLike, mode: str = "wt", delimiter: str = ","):
+    # mode = wt as gzip does not support newline in binary mode
     with get_open_fn(file)(str(file), mode, newline="") as f:
         writer = csv.writer(
             f, delimiter=delimiter, quoting=csv.QUOTE_MINIMAL, lineterminator="\n"
