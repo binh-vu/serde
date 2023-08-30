@@ -5,11 +5,9 @@ description = "Utilities for deserializing/serializing Python objects"
 authors = ["Binh Vu <binh@toan2.com>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/binh-vu/ream"
-repository = "https://github.com/binh-vu/ream"
-packages = [
-    { include = "serde" }
-]
+homepage = "https://github.com/binh-vu/serde"
+repository = "https://github.com/binh-vu/serde"
+packages = [{ include = "serde" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
