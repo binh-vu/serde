@@ -11,7 +11,7 @@ packages = [{ include = "serde" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-orjson = ">= 3.9.0, < 4.0.0"
+orjson = "^3.9.0"
 ujson = "^5.5.0"
 "ruamel.yaml" = "^0.17.21"
 typing-extensions = "^4.4.0"
