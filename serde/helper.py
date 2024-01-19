@@ -1,21 +1,23 @@
-from io import BufferedWriter, TextIOWrapper
+import bz2
+import gzip
+import os
+from contextlib import contextmanager
+from pathlib import Path
 from typing import (
     Any,
-    Callable,
     Generator,
     Iterable,
     Literal,
     Optional,
     Protocol,
-    Union,
     TypeVar,
+    Union,
 )
-from typing_extensions import Self
-from pathlib import Path
-import bz2
-import gzip
-import orjson
+
 import chardet
+import orjson
+import zstandard as zstd
+from typing_extensions import Self
 
 try:
     import lz4.frame as lz4_frame  # type: ignore
@@ -26,17 +28,18 @@ PathLike = Union[str, Path]
 T = TypeVar("T")
 DEFAULT_ORJSON_OPTS = orjson.OPT_NON_STR_KEYS
 
-AVAILABLE_COMPRESSIONS = Literal["bz2", "gz", "lz4"]
+AVAILABLE_COMPRESSIONS = Literal["bz2", "gz", "lz4", "zstd"]
 
 
-def get_open_fn(infile: PathLike) -> Any:
-    """Get the correct open function for the input file based on its extension. Supported bzip2, gz, and lz4.
+def get_open_fn(infile: PathLike, compression_level: Optional[int] = None) -> Any:
+    """Get the correct open function for the input file based on its extension. Supported formats defined in the `AVAILABLE_COMPRESSIONS` variable.
 
     Parameters
     ----------
     infile : PathLike
         the file we wish to open
-
+    compression_level : Optional[int], optional
+        the compression level, by default None to use default compression
     Returns
     -------
     Callable
@@ -57,6 +60,30 @@ def get_open_fn(infile: PathLike) -> Any:
         if lz4_frame is None:
             raise ValueError("lz4 is not installed")
         return lz4_frame.open
+    elif infile.endswith(".zst"):
+        if compression_level is None and "SERDE_ZSTD_COMPRESSION_LEVEL" in os.environ:
+            compression_level = int(os.environ["SERDE_ZSTD_COMPRESSION_LEVEL"])
+
+        default_compression_level = compression_level or 3
+
+        @contextmanager
+        def zstd_open(
+            filepath: Path,
+            mode: Literal["rb", "wb"],
+            compression_level: Optional[int] = None,
+        ):
+            if compression_level is None:
+                compression_level = default_compression_level
+
+            compressor = zstd.ZstdCompressor(level=compression_level)
+            if mode.find("r") != -1:
+                with open(filepath, mode) as f:
+                    yield compressor.stream_reader(f)
+            else:
+                with open(filepath, mode) as f:
+                    yield compressor.stream_writer(f)
+
+        return zstd_open
     else:
         return open
 
@@ -69,6 +96,8 @@ def get_compression(file: Union[str, Path]) -> Optional[AVAILABLE_COMPRESSIONS]:
         return "gz"
     if file.endswith(".lz4"):
         return "lz4"
+    if file.endswith(".zst"):
+        return "zstd"
     return None
 
 
@@ -77,6 +106,8 @@ def get_filepath(
 ) -> Path:
     if compression is None:
         return Path(file)
+    if compression == "zstd":
+        return Path(str(file) + ".zst")
     return Path(str(file) + f".{compression}")
 
 
