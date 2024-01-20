@@ -1,27 +1,14 @@
 import bz2
 import gzip
 import os
-from contextlib import contextmanager
-from io import BytesIO, FileIO, IOBase
 from pathlib import Path
 from types import TracebackType
-from typing import (
-    Any,
-    BinaryIO,
-    Generator,
-    Iterable,
-    Iterator,
-    Literal,
-    Optional,
-    Protocol,
-    TypeVar,
-    Union,
-)
+from typing import Any, Generator, Iterable, Literal, Optional, Protocol, TypeVar, Union
 
 import chardet
 import orjson
 import zstandard as zstd
-from typing_extensions import Self
+from typing_extensions import BinaryIO, Self
 
 try:
     import lz4.frame as lz4_frame  # type: ignore
