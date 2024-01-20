@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "serde2"
-version = "1.7.0"
+version = "1.7.1"
 description = "Utilities for deserializing/serializing Python objects"
 authors = ["Binh Vu <binh@toan2.com>"]
 license = "MIT"

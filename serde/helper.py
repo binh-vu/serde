@@ -3,16 +3,7 @@ import gzip
 import os
 from contextlib import contextmanager
 from pathlib import Path
-from typing import (
-    Any,
-    Generator,
-    Iterable,
-    Literal,
-    Optional,
-    Protocol,
-    TypeVar,
-    Union,
-)
+from typing import Any, Generator, Iterable, Literal, Optional, Protocol, TypeVar, Union
 
 import chardet
 import orjson
@@ -75,13 +66,16 @@ def get_open_fn(infile: PathLike, compression_level: Optional[int] = None) -> An
             if compression_level is None:
                 compression_level = default_compression_level
 
-            compressor = zstd.ZstdCompressor(level=compression_level)
             if mode.find("r") != -1:
+                cctx = zstd.ZstdDecompressor()
                 with open(filepath, mode) as f:
-                    yield compressor.stream_reader(f)
+                    with cctx.stream_reader(f) as obj:
+                        yield obj
             else:
+                cctx = zstd.ZstdCompressor(level=compression_level)
                 with open(filepath, mode) as f:
-                    yield compressor.stream_writer(f)
+                    with cctx.stream_writer(f) as obj:
+                        yield obj
 
         return zstd_open
     else:
