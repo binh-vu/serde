@@ -2,8 +2,21 @@ import bz2
 import gzip
 import os
 from contextlib import contextmanager
+from io import BytesIO, FileIO, IOBase
 from pathlib import Path
-from typing import Any, Generator, Iterable, Literal, Optional, Protocol, TypeVar, Union
+from types import TracebackType
+from typing import (
+    Any,
+    BinaryIO,
+    Generator,
+    Iterable,
+    Iterator,
+    Literal,
+    Optional,
+    Protocol,
+    TypeVar,
+    Union,
+)
 
 import chardet
 import orjson
@@ -57,7 +70,6 @@ def get_open_fn(infile: PathLike, compression_level: Optional[int] = None) -> An
 
         default_compression_level = compression_level or 3
 
-        @contextmanager
         def zstd_open(
             filepath: Path,
             mode: Literal["rb", "wb"],
@@ -66,16 +78,16 @@ def get_open_fn(infile: PathLike, compression_level: Optional[int] = None) -> An
             if compression_level is None:
                 compression_level = default_compression_level
 
+            stream1 = open(filepath, mode)
+
             if mode.find("r") != -1:
                 cctx = zstd.ZstdDecompressor()
-                with open(filepath, mode) as f:
-                    with cctx.stream_reader(f) as obj:
-                        yield obj
+                stream2 = cctx.stream_reader(stream1)
             else:
                 cctx = zstd.ZstdCompressor(level=compression_level)
-                with open(filepath, mode) as f:
-                    with cctx.stream_writer(f) as obj:
-                        yield obj
+                stream2 = cctx.stream_writer(stream1)
+
+            return WrappedStream(stream1, stream2)
 
         return zstd_open
     else:
@@ -162,3 +174,51 @@ class JsonSerde(Protocol):
     @classmethod
     def from_dict(cls, obj: dict) -> Self:
         ...
+
+
+class WrappedStream(BinaryIO):
+    def __init__(self, upstream: BinaryIO, downstream: BinaryIO):
+        self.upstream = upstream
+        self.downstream = downstream
+
+    def __enter__(self) -> Self:
+        self.upstream.__enter__()
+        self.downstream.__enter__()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        self.downstream.__exit__(exc_type, exc_val, exc_tb)
+        self.upstream.__exit__(exc_type, exc_val, exc_tb)
+
+    def write(self, s: Union[bytes, bytearray]) -> int:
+        return self.downstream.write(s)
+
+    def close(self) -> None:
+        self.downstream.close()
+        self.upstream.close()
+
+    def flush(self) -> None:
+        self.downstream.flush()
+
+    def writable(self) -> bool:
+        return self.downstream.writable()
+
+    def writelines(self, __lines) -> None:
+        self.downstream.writelines(__lines)
+
+    def read(self, n: int = -1):
+        return self.downstream.read(n)
+
+    def readable(self) -> bool:
+        return self.downstream.readable()
+
+    def readline(self, limit: int = -1):
+        return self.downstream.readline(limit)
+
+    def readlines(self, hint: int = -1):
+        return self.downstream.readlines(hint)
