@@ -111,7 +111,7 @@ def fix_encoding(fpath: Union[str, Path], backup_file: bool = True) -> Union[str
 
     The function return True if the content is in UTF-8
     """
-    with get_open_fn(str(fpath))(str(fpath), "rb") as f:
+    with get_open_fn(str(fpath))(str(fpath), mode="rb") as f:
         content = f.read()
 
     try:
@@ -126,7 +126,7 @@ def fix_encoding(fpath: Union[str, Path], backup_file: bool = True) -> Union[str
         encoding = chardet.detect(content)["encoding"]
         content = content.decode(encoding)
 
-    with get_open_fn(str(fpath))(str(fpath), "wb") as f:
+    with get_open_fn(str(fpath))(str(fpath), mode="wb") as f:
         f.write(content.encode())
 
     return content
@@ -153,9 +153,7 @@ def _orjson_default(obj):
 
 
 class JsonSerde(Protocol):
-    def to_dict(self) -> dict:
-        ...
+    def to_dict(self) -> dict: ...
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
-        ...
+    def from_dict(cls, obj: dict) -> Self: ...

@@ -83,7 +83,7 @@ def deser(
 
         return [row for row in reader]
 
-    with get_open_fn(file)(str(file), "r") as f:
+    with get_open_fn(file)(str(file), mode="r") as f:
         reader = csv.reader(f, delimiter=delimiter)
 
         if deser_as_record:
