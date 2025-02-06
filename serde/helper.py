@@ -3,6 +3,7 @@ from __future__ import annotations
 import bz2
 import gzip
 import os
+import threading
 from io import BufferedReader
 from pathlib import Path
 from types import TracebackType
@@ -23,6 +24,48 @@ T = TypeVar("T")
 DEFAULT_ORJSON_OPTS = orjson.OPT_NON_STR_KEYS
 
 AVAILABLE_COMPRESSIONS = Literal["bz2", "gz", "lz4", "zstd"]
+
+container = threading.local()
+container.compressors = {}
+container.zstd_decompressor = zstd.ZstdDecompressor()
+
+
+def compress_bytes(
+    dat: bytes,
+    compression: AVAILABLE_COMPRESSIONS,
+    compression_level: Optional[int] = None,
+) -> bytes:
+    if compression == "bz2":
+        # default of bz2 is 9
+        return bz2.compress(dat, compresslevel=compression_level or 9)
+    if compression == "gz":
+        # default of gz is 9
+        return gzip.compress(dat, compresslevel=compression_level or 9, mtime=0)
+    if compression == "lz4":
+        if lz4_frame is None:
+            raise ValueError("lz4 is not installed")
+        return lz4_frame.compress(dat)
+    if compression == "zstd":
+        name = f"zstd_{compression_level or 6}_compressor"
+        if compression_level not in container.compressors:
+            container.compressors[name] = zstd.ZstdCompressor(
+                level=compression_level or 6
+            )
+        return container.compressors[name].compress(dat)
+    raise ValueError(f"Unknown compression: {compression}")
+
+
+def decompress_bytes(dat: bytes, compression: AVAILABLE_COMPRESSIONS) -> bytes:
+    if compression == "bz2":
+        return bz2.decompress(dat)
+    if compression == "gz":
+        return gzip.decompress(dat)
+    if compression == "lz4":
+        if lz4_frame is None:
+            raise ValueError("lz4 is not installed")
+        return lz4_frame.decompress(dat)
+    if compression == "zstd":
+        return container.zstd_decompressor.decompress(dat)
 
 
 def get_open_fn(infile: PathLike, compression_level: Optional[int] = None) -> Any:
