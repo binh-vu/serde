@@ -4,10 +4,21 @@ import bz2
 import gzip
 import os
 import threading
+from contextlib import contextmanager
 from io import BufferedReader
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Generator, Iterable, Literal, Optional, Protocol, TypeVar, Union
+from typing import (
+    IO,
+    Any,
+    Generator,
+    Iterable,
+    Literal,
+    Optional,
+    Protocol,
+    TypeVar,
+    Union,
+)
 
 import chardet
 import orjson
@@ -19,7 +30,7 @@ try:
 except ImportError:
     lz4_frame = None
 
-PathLike = Union[str, Path]
+PathLike = Union[str, Path, IO]
 T = TypeVar("T")
 DEFAULT_ORJSON_OPTS = orjson.OPT_NON_STR_KEYS
 
@@ -68,13 +79,19 @@ def decompress_bytes(dat: bytes, compression: AVAILABLE_COMPRESSIONS) -> bytes:
         return container.zstd_decompressor.decompress(dat)
 
 
+@contextmanager
+def open_file_object(infile: IO, *args, **kwargs) -> IO:
+    """Implement a duck-typed open function for file-like objects because the build-in open function does not support file-like objects."""
+    yield infile
+
+
 def get_open_fn(infile: PathLike, compression_level: Optional[int] = None) -> Any:
     """Get the correct open function for the input file based on its extension. Supported formats defined in the `AVAILABLE_COMPRESSIONS` variable.
 
     Parameters
     ----------
     infile : PathLike
-        the file we wish to open
+        the file we wish to open (can be file-like object)
     compression_level : Optional[int], optional
         the compression level, by default None to use default compression
     Returns
@@ -87,6 +104,9 @@ def get_open_fn(infile: PathLike, compression_level: Optional[int] = None) -> An
     ValueError
         when encounter unknown extension
     """
+    if hasattr(infile, "read"):
+        return open_file_object
+
     infile = str(infile)
 
     if infile.endswith(".bz2"):
