@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "serde2"
-version = "1.9.1"
+version = "1.9.2"
 description = "Utilities for deserializing/serializing Python objects"
 authors = ["Binh Vu <binh@toan2.com>"]
 license = "MIT"
@@ -17,7 +17,7 @@ ujson = "^5.5.0"
 typing-extensions = "^4.4.0"
 chardet = "^5.0.0"
 lz4 = "^4.0.2"
-zstandard = "^0.22.0"
+zstandard = "^0.23.0"
 
 [tool.poetry.extras]
 lz4 = ["lz4"]
